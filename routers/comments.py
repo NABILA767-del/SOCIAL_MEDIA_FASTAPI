@@ -102,7 +102,7 @@ def get_comments(
             })
 
         last_page = max((total - 1) // limit + 1, 1)
-        base_url = "/comments"
+        base_url = "/api/v1/comments"
         links = {
             "self": f"{base_url}?page={page}&limit={limit}",
             "first": f"{base_url}?page=1&limit={limit}",
@@ -114,7 +114,7 @@ def get_comments(
             links["next"] = f"{base_url}?page={page+1}&limit={limit}"
 
         response_data = {
-            "api_version": version,
+            "api_version": "v1",
             "data": result,
             "total": total,
             "page": page,

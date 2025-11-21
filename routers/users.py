@@ -43,6 +43,7 @@ def get_users(
     firstName: str | None = None,
     lastName: str | None = None,
     email: str | None = None,
+    search: str | None = Query(None, description="Global search by name/first name/email"),
     accept: str = Header("application/json"),
     accept_encoding: str = Header("identity"),
     accept_language: str = Header("en"),
@@ -61,9 +62,34 @@ def get_users(
             query = query.filter(User.lastName.ilike(f"%{remove_accents(lastName)}%"))
         if email:
             query = query.filter(User.email.ilike(f"%{email}%"))
+        
+        users_list = query.all()
 
-        total = query.count()
-        users_page = query.offset((page - 1) * limit).limit(limit).all()
+        
+        if search:
+            s_norm = remove_accents(search).lower()
+            users_list = [
+                u for u in users_list
+                if s_norm in remove_accents(u.firstName).lower()
+                or s_norm in remove_accents(u.lastName).lower()
+                or s_norm in remove_accents(u.email).lower()
+            ]
+
+        
+        if sort_by in ["firstName", "lastName", "email", "registerDate", "dateOfBirth"]:
+            reverse = sort_order.lower() == "desc"
+            users_list.sort(
+                key=lambda u: remove_accents(str(getattr(u, sort_by))).lower()
+                if isinstance(getattr(u, sort_by), str)
+                else getattr(u, sort_by),
+                reverse=reverse
+            )
+
+        
+        total = len(users_list)
+        start = (page - 1) * limit
+        end = start + limit
+        users_page = users_list[start:end]
 
         result = []
         for u in users_page:
@@ -96,7 +122,7 @@ def get_users(
             collection_links.append({"rel": "next", "href": f"/api/v1/users?page={page+1}&limit={limit}"})
 
         response_data = {
-            "api_version": version,
+            "api_version": "v1",
             "data": result,
             "total": total,
             "page": page,
