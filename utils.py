@@ -25,7 +25,6 @@ def validate_uuid(param_value: str, param_name: str):
             detail=f"PARAMS_NOT_VALID: {param_name} format invalid"
         )
 
-
 def is_valid_uuid(val: str) -> bool:
     """Returns True if val is a valid UUID"""
     try:
