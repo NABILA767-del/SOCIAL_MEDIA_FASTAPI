@@ -11,7 +11,6 @@ from fastapi import Header, HTTPException
 
 Base = declarative_base()
 
-
 class User(Base):
     __tablename__= "users"
 
