@@ -175,15 +175,40 @@ def get_users(
         )
 
 @router.get("/{user_id}", response_model=UserRead, summary="Retrieve a user by ID")
-def get_user(user_id: str = Path(..., description="UUID of the user to retrieve"), db: Session = Depends(get_db)):
+def get_user(
+    user_id: str = Path(..., description="UUID of the user to retrieve"),
+    db: Session = Depends(get_db)
+):
     if not is_valid_uuid(user_id):
         raise HTTPException(status_code=422, detail="PARAMS_NOT_VALID: user_id invalid UUID")
+
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="RESOURCE_NOT_FOUND: user not found")
+
     if user.location:
         user.location = json.loads(user.location)
-    return user
+
+
+    user_dict = {
+        "id": safe_str(user.id),
+        "firstName": safe_str(user.firstName),
+        "lastName": safe_str(user.lastName),
+        "email": safe_str(user.email),
+        "title": safe_str(user.title),
+        "dateOfBirth": format_date(user.dateOfBirth, "en"),
+        "registerDate": format_date(user.registerDate, "en"),
+        "phone": safe_str(user.phone),
+        "picture": safe_str(user.picture),
+        "location": user.location,
+        "links": [
+            {"rel": "self", "href": f"/api/v1/users/{user.id}"},
+            {"rel": "posts", "href": f"/api/v1/users/{user.id}/posts"},
+            {"rel": "comments", "href": f"/api/v1/users/{user.id}/comments"}
+        ]
+    }
+
+    return user_dict
 
 
 @router.post("", response_model=UserRead, summary="Create a new user")

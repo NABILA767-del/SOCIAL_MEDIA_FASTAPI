@@ -31,7 +31,7 @@ def get_user_posts(
     limit: int = 10,
     db: Session = Depends(get_db)
 ):
-    validate_uuid(user_id,"user_id")
+    validate_uuid(user_id, "user_id")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, detail="RESOURCE_NOT_FOUND:user not found")
@@ -40,8 +40,9 @@ def get_user_posts(
     posts = db.query(Post).filter(Post.owner_id == user_id).offset(offset).limit(limit).all()
     total = db.query(Post).filter(Post.owner_id == user_id).count()
 
-    result = [
-        PostRead(
+    result = []
+    for p in posts:
+        post_item = PostRead(
             id=p.id,
             text=p.text,
             tags=json.loads(p.tags) if p.tags else [],
@@ -56,10 +57,25 @@ def get_user_posts(
                 picture=user.picture
             )
         )
-        for p in posts
-    ]
+        
+        post_item.links = [
+            {"rel": "self", "href": f"/api/v1/posts/{p.id}"},
+            {"rel": "owner", "href": f"/api/v1/users/{user.id}"}
+        ]
+        result.append(post_item)
 
-    return PaginatedResponse(data=result, total=total, page=page, limit=limit)
+    
+    total_pages = (total + limit - 1) // limit
+    collection_links = [
+        {"rel": "first", "href": f"/api/v1/users/{user_id}/posts?page=1&limit={limit}"},
+        {"rel": "last", "href": f"/api/v1/users/{user_id}/posts?page={total_pages}&limit={limit}"}
+    ]
+    if page > 1:
+        collection_links.append({"rel": "prev", "href": f"/api/v1/users/{user_id}/posts?page={page-1}&limit={limit}"})
+    if page < total_pages:
+        collection_links.append({"rel": "next", "href": f"/api/v1/users/{user_id}/posts?page={page+1}&limit={limit}"})
+
+    return PaginatedResponse(data=result, total=total, page=page, limit=limit, links=collection_links)
 
 @router.get(
     "/api/v1/users/{user_id}/comments",
@@ -91,25 +107,42 @@ def get_user_comments(
     comments = db.query(Comment).filter(Comment.owner_id == user_id).offset(offset).limit(limit).all()
     total = db.query(Comment).filter(Comment.owner_id == user_id).count()
 
-    result = [
-        CommentRead(
-            id=c.id,
-            message=c.message,
-            owner_id=c.owner_id,
-            post_id=c.post_id,
-            publishDate=c.publishDate,
-            owner=UserSummary(
-                id=user.id,
-                firstName=user.firstName,
-                lastName=user.lastName,
-                title=user.title,
-                picture=user.picture
+    result = []
+    for c in comments:
+        result.append(
+            CommentRead(
+                id=c.id,
+                message=c.message,
+                owner_id=c.owner_id,
+                post_id=c.post_id,
+                publishDate=c.publishDate,
+                owner=UserSummary(
+                    id=user.id,
+                    firstName=user.firstName,
+                    lastName=user.lastName,
+                    title=user.title,
+                    picture=user.picture
+                ),
+                links=[
+                    {"rel": "self", "href": f"/api/v1/comments/{c.id}"},
+                    {"rel": "post", "href": f"/api/v1/posts/{c.post_id}"}
+                ]
             )
         )
-        for c in comments
-    ]
 
-    return PaginatedResponse(data=result, total=total, page=page, limit=limit)
+    total_pages = (total + limit - 1) // limit
+    collection_links = [
+        {"rel": "self", "href": f"/api/v1/users/{user_id}/comments?page={page}&limit={limit}"},
+        {"rel": "first", "href": f"/api/v1/users/{user_id}/comments?page=1&limit={limit}"},
+        {"rel": "last", "href": f"/api/v1/users/{user_id}/comments?page={total_pages}&limit={limit}"}
+    ]
+    if page > 1:
+        collection_links.append({"rel": "prev", "href": f"/api/v1/users/{user_id}/comments?page={page-1}&limit={limit}"})
+    if page < total_pages:
+        collection_links.append({"rel": "next", "href": f"/api/v1/users/{user_id}/comments?page={page+1}&limit={limit}"})
+
+    return PaginatedResponse(data=result, total=total, page=page, limit=limit, links=collection_links)
+
 
 @router.get(
     "/api/v1/posts/{post_id}/comments",
@@ -135,31 +168,48 @@ def get_post_comments(
     validate_uuid(post_id, "post_id")
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
-        raise HTTPException(404, detail="RESOURCE_NOT_FOUND:post not found")
+        raise HTTPException(status_code=404, detail="RESOURCE_NOT_FOUND:post not found")
 
     offset = (page - 1) * limit
     comments = db.query(Comment).filter(Comment.post_id == post_id).offset(offset).limit(limit).all()
     total = db.query(Comment).filter(Comment.post_id == post_id).count()
 
-    result = [
-        CommentRead(
-            id=c.id,
-            message=c.message,
-            owner_id=c.owner_id,
-            post_id=c.post_id,
-            publishDate=c.publishDate,
-            owner=UserSummary(
-                id=c.owner.id,
-                firstName=c.owner.firstName,
-                lastName=c.owner.lastName,
-                title=c.owner.title,
-                picture=c.owner.picture
-            ) if c.owner else None
+    result = []
+    for c in comments:
+        result.append(
+            CommentRead(
+                id=c.id,
+                message=c.message,
+                owner_id=c.owner_id,
+                post_id=c.post_id,
+                publishDate=c.publishDate,
+                owner=UserSummary(
+                    id=c.owner.id,
+                    firstName=c.owner.firstName,
+                    lastName=c.owner.lastName,
+                    title=c.owner.title,
+                    picture=c.owner.picture
+                ) if c.owner else None,
+                links=[
+                    {"rel": "self", "href": f"/api/v1/comments/{c.id}"},
+                    {"rel": "owner", "href": f"/api/v1/users/{c.owner_id}"} if c.owner_id else {}
+                ]
+            )
         )
-        for c in comments
-    ]
 
-    return PaginatedResponse(data=result, total=total, page=page, limit=limit)
+    total_pages = (total + limit - 1) // limit
+    collection_links = [
+        {"rel": "self", "href": f"/api/v1/posts/{post_id}/comments?page={page}&limit={limit}"},
+        {"rel": "first", "href": f"/api/v1/posts/{post_id}/comments?page=1&limit={limit}"},
+        {"rel": "last", "href": f"/api/v1/posts/{post_id}/comments?page={total_pages}&limit={limit}"}
+    ]
+    if page > 1:
+        collection_links.append({"rel": "prev", "href": f"/api/v1/posts/{post_id}/comments?page={page-1}&limit={limit}"})
+    if page < total_pages:
+        collection_links.append({"rel": "next", "href": f"/api/v1/posts/{post_id}/comments?page={page+1}&limit={limit}"})
+
+    return PaginatedResponse(data=result, total=total, page=page, limit=limit, links=collection_links)
+
 
 @router.get(
     "/api/v1/tags/{tagname}/posts",
@@ -182,23 +232,39 @@ def get_posts_by_tag(
     if not posts:
         raise HTTPException(status_code=404, detail=f"No posts found for tag '{tagname}'")
 
-    result = [
-        PostRead(
-            id=p.id,
-            text=p.text,
-            tags=json.loads(p.tags) if p.tags else [],
-            publishDate=p.publishDate,
-            likes=p.likes,
-            image=p.image,
-            user=UserSummary(
-                id=p.owner.id,
-                firstName=p.owner.firstName,
-                lastName=p.owner.lastName,
-                title=p.owner.title,
-                picture=p.owner.picture
+    result = []
+    for p in posts:
+        result.append(
+            PostRead(
+                id=p.id,
+                text=p.text,
+                tags=json.loads(p.tags) if p.tags else [],
+                publishDate=p.publishDate,
+                likes=p.likes,
+                image=p.image,
+                user=UserSummary(
+                    id=p.owner.id,
+                    firstName=p.owner.firstName,
+                    lastName=p.owner.lastName,
+                    title=p.owner.title,
+                    picture=p.owner.picture
+                ),
+                links=[
+                    {"rel": "self", "href": f"/api/v1/posts/{p.id}"},
+                    {"rel": "owner", "href": f"/api/v1/users/{p.owner.id}"}
+                ]
             )
         )
-        for p in posts
-    ]
 
-    return PaginatedResponse(data=result, total=total, page=page, limit=limit)
+    total_pages = (total + limit - 1) // limit
+    collection_links = [
+        {"rel": "self", "href": f"/api/v1/tags/{tagname}/posts?page={page}&limit={limit}"},
+        {"rel": "first", "href": f"/api/v1/tags/{tagname}/posts?page=1&limit={limit}"},
+        {"rel": "last", "href": f"/api/v1/tags/{tagname}/posts?page={total_pages}&limit={limit}"}
+    ]
+    if page > 1:
+        collection_links.append({"rel": "prev", "href": f"/api/v1/tags/{tagname}/posts?page={page-1}&limit={limit}"})
+    if page < total_pages:
+        collection_links.append({"rel": "next", "href": f"/api/v1/tags/{tagname}/posts?page={page+1}&limit={limit}"})
+
+    return PaginatedResponse(data=result, total=total, page=page, limit=limit, links=collection_links)

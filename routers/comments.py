@@ -199,15 +199,37 @@ def create_comment(comment: CommentCreate, db: Session = Depends(get_db)):
     "/{comment_id}",
     tags=["Comments"],
     summary="Retrieve a comment by ID",
-    description="Retrieves a specific comment by its identifier.",
-    response_model=CommentRead
+    description="Retrieves a specific comment by its identifier."
 )
 def get_comment(comment_id: str, db: Session = Depends(get_db)):
+
     validate_uuid(comment_id, "comment_id")
+
+
     comment = db.query(Comment).filter(Comment.id == comment_id).first()
     if not comment:
         raise HTTPException(status_code=404, detail="RESOURCE_NOT_FOUND: comment not found")
-    return comment
+
+    comment_dict = {
+        "id": safe_str(comment.id),
+        "message": safe_str(comment.message),
+        "post_id": safe_str(comment.post_id),
+        "publishDate": format_date(comment.publishDate, "en"),
+        "owner": {
+            "id": safe_str(comment.owner.id),
+            "firstName": safe_str(comment.owner.firstName),
+            "lastName": safe_str(comment.owner.lastName),
+            "title": safe_str(comment.owner.title),
+            "picture": safe_str(comment.owner.picture)
+        } if comment.owner else None,
+        "links": [
+            {"rel": "self", "href": f"/api/v1/comments/{comment.id}"},
+            {"rel": "owner", "href": f"/api/v1/users/{comment.owner_id}"},
+            {"rel": "post", "href": f"/api/v1/posts/{comment.post_id}"}
+        ]
+    }
+
+    return comment_dict
 
 
 @router.put(

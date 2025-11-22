@@ -205,12 +205,41 @@ def create_post(post: PostCreate, db: Session = Depends(get_db)):
     description="Retrieves a specific post by its ID.",
     response_model=PostRead
 )
-def get_post(post_id: str = Path(..., description="UUID of the post"), db: Session = Depends(get_db)):
+def get_post(
+    post_id: str = Path(..., description="UUID of the post"),
+    db: Session = Depends(get_db)
+):
+
     validate_uuid(post_id, "post_id")
+
+
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
-        raise HTTPException(status_code=404, detail="RESOURCE_NOT_FOUND:post not found")
-    return post
+        raise HTTPException(status_code=404, detail="RESOURCE_NOT_FOUND: post not found")
+
+    
+    post_dict = {
+        "id": safe_str(post.id),
+        "text": safe_str(post.text),
+        "image": safe_str(post.image),
+        "likes": post.likes,
+        "tags": json.loads(post.tags) if post.tags else [],
+        "publishDate": format_date(post.publishDate, "en"),
+        "user": {
+            "id": safe_str(post.owner.id),
+            "firstName": safe_str(post.owner.firstName),
+            "lastName": safe_str(post.owner.lastName),
+            "title": safe_str(post.owner.title),
+            "picture": safe_str(post.owner.picture)
+        },
+        "links": [
+            {"rel": "self", "href": f"/api/v1/posts/{post.id}"},
+            {"rel": "owner", "href": f"/api/v1/users/{post.owner.id}"},
+            {"rel": "comments", "href": f"/api/v1/posts/{post.id}/comments"}
+        ]
+    }
+
+    return post_dict
 
 
 @router.put(
