@@ -1,9 +1,8 @@
 import uuid
 import json
-import re
 from datetime import datetime, date
 from typing import List, Optional, Dict, TypeVar, Generic
-
+import re
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship, declarative_base
 from pydantic import BaseModel, EmailStr, HttpUrl, field_validator,ConfigDict
@@ -203,8 +202,8 @@ class PostListResponse(BaseModel):
     links:List[Link]=[]
 
 class ParamsNotValidException(HTTPException):
-    def init(self, param_name: str):
-        super().init(
+    def __init__(self, param_name: str):
+        super().__init__(
             status_code=400,
             detail=f"PARAMS_NOT_VALID: {param_name} format invalid"
         )

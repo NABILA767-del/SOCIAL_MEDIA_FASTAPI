@@ -14,6 +14,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from dicttoxml import dicttoxml
+from models import ParamsNotValidException
 def validate_uuid(param_value: str, param_name: str):
     """Check that the value is a valid UUID"""
     try:
@@ -236,3 +237,10 @@ def register_exception_handlers(app: FastAPI):
             status_code=400,
             content={"detail": "BODY_NOT_VALID: check JSON format or fields"}
         )
+    @app.exception_handler(ParamsNotValidException)
+    async def params_not_valid_handler(request: Request, exc: ParamsNotValidException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail}
+        )
+    
