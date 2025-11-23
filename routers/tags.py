@@ -3,24 +3,19 @@ from typing import List
 from sqlalchemy.orm import Session
 import json
 
-from models import Post,TagResponse
+from models import Post,TagResponse,TagWithLinks
 from database import get_db
 
 router = APIRouter()
 
+
+
 @router.get(
     "",
     tags=["Tags"],
-    summary="Retrieve the list of all tags",
-    description="""
-Returns a list of all unique tags used across posts.
-
-How it works:
-- Reads the 'tags' field from every post.
-- Extracts all tags (strings inside the JSON list).
-- Removes duplicates.
-""",
-    response_model=List[str]
+    summary="Retrieve the list of all tags with HATEOAS links",
+    description="Returns all unique tags used across posts, with links to fetch posts by tag.",
+    response_model=List[TagWithLinks]
 )
 def get_tags(db: Session = Depends(get_db)):
     posts = db.query(Post).all()
@@ -35,6 +30,15 @@ def get_tags(db: Session = Depends(get_db)):
                         if isinstance(t, str):
                             all_tags.add(t)
             except Exception:
-                continue  
+                continue
 
-    return sorted(list(all_tags))
+    result = []
+    for t in sorted(all_tags):
+        result.append({
+            "tag": t,
+            "links": [
+                {"rel": "self", "href": f"/api/v1/tags/{t}/posts"}
+            ]
+        })
+
+    return result

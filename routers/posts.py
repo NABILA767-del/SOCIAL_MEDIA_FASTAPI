@@ -181,21 +181,85 @@ def create_post(post: PostCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_post)
 
-    return PostRead(
+    user_summary = UserSummary(
+        id=owner.id,
+        firstName=owner.firstName,
+        lastName=owner.lastName,
+        title=owner.title,
+        picture=owner.picture
+    )
+
+    post_dict = PostRead(
         id=db_post.id,
         text=db_post.text,
         image=db_post.image,
         likes=db_post.likes,
         tags=post.tags,
         publishDate=db_post.publishDate,
-        user=UserSummary(
-            id=owner.id,
-            firstName=owner.firstName,
-            lastName=owner.lastName,
-            title=owner.title,
-            picture=owner.picture
-        )
+        user=user_summary
+    ).dict()
+
+    
+    post_dict["links"] = [
+        {"rel": "self", "href": f"/api/v1/posts/{db_post.id}"},
+        {"rel": "owner", "href": f"/api/v1/users/{owner.id}"},
+        {"rel": "comments", "href": f"/api/v1/posts/{db_post.id}/comments"}
+    ]
+
+    return post_dict
+
+
+@router.put(
+    "/{post_id}",
+    tags=["Posts"],
+    summary="Update a post",
+    description="Updates an existing post. The owner_id cannot be changed.",
+    response_model=PostRead
+)
+def update_post(post_id: str, post_data: PostCreate, db: Session = Depends(get_db)):
+    validate_uuid(post_id, "post_id")
+    db_post = db.query(Post).filter(Post.id == post_id).first()
+    if not db_post:
+        raise HTTPException(status_code=404, detail="RESOURCE_NOT_FOUND:post not found")
+    if post_data.owner_id != db_post.owner_id:
+        raise HTTPException(status_code=400, detail="Cannot change owner_id")
+
+    db_post.text = post_data.text
+    db_post.image = str(post_data.image) if post_data.image else db_post.image
+    db_post.likes = post_data.likes or db_post.likes
+    db_post.tags = json.dumps(post_data.tags) if post_data.tags else db_post.tags
+
+    db.commit()
+    db.refresh(db_post)
+
+    owner = db_post.owner
+
+    user_summary = UserSummary(
+        id=owner.id,
+        firstName=owner.firstName,
+        lastName=owner.lastName,
+        title=owner.title,
+        picture=owner.picture
     )
+
+    post_dict = PostRead(
+        id=db_post.id,
+        text=db_post.text,
+        image=db_post.image,
+        likes=db_post.likes,
+        tags=json.loads(db_post.tags),
+        publishDate=db_post.publishDate,
+        user=user_summary
+    ).dict()
+
+    
+    post_dict["links"] = [
+        {"rel": "self", "href": f"/api/v1/posts/{db_post.id}"},
+        {"rel": "owner", "href": f"/api/v1/users/{owner.id}"},
+        {"rel": "comments", "href": f"/api/v1/posts/{db_post.id}/comments"}
+    ]
+
+    return post_dict
 
 
 @router.get(
@@ -242,46 +306,6 @@ def get_post(
     return post_dict
 
 
-@router.put(
-    "/{post_id}",
-    tags=["Posts"],
-    summary="Update a post",
-    description="Updates an existing post. The owner_id cannot be changed.",
-    response_model=PostRead
-)
-def update_post(post_id: str, post_data: PostCreate, db: Session = Depends(get_db)):
-    validate_uuid(post_id,"post_id")
-    db_post = db.query(Post).filter(Post.id == post_id).first()
-    if not db_post:
-        raise HTTPException(status_code=404, detail="RESOURCE_NOT_FOUND:post not found")
-    if post_data.owner_id != db_post.owner_id:
-        raise HTTPException(status_code=400, detail="Cannot change owner_id")
-
-    db_post.text = post_data.text
-    db_post.image = str(post_data.image) if post_data.image else db_post.image
-    db_post.likes = post_data.likes or db_post.likes
-    db_post.tags = json.dumps(post_data.tags) if post_data.tags else db_post.tags
-
-    db.commit()
-    db.refresh(db_post)
-
-    owner = db_post.owner  
-
-    return PostRead(
-        id=db_post.id,
-        text=db_post.text,
-        image=db_post.image,
-        likes=db_post.likes,
-        tags=json.loads(db_post.tags),
-        publishDate=db_post.publishDate,
-        user=UserSummary(
-            id=owner.id,
-            firstName=owner.firstName,
-            lastName=owner.lastName,
-            title=owner.title,
-            picture=owner.picture
-        )
-    )
 
 
 @router.delete(

@@ -216,6 +216,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == user.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already exists")
+
     db_user = User(
         id=str(uuid.uuid4()),
         firstName=user.firstName,
@@ -231,11 +232,27 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    user_dict = db_user._dict_
-    if user_dict.get("location"):
-        user_dict["location"] = json.loads(user_dict["location"])
-    return user_dict
 
+    
+    user_dict = {
+        "id": db_user.id,
+        "firstName": db_user.firstName,
+        "lastName": db_user.lastName,
+        "email": db_user.email,
+        "title": db_user.title,
+        "dateOfBirth": db_user.dateOfBirth.isoformat() if db_user.dateOfBirth else None,
+        "registerDate": db_user.registerDate.isoformat(),
+        "phone": db_user.phone,
+        "picture": db_user.picture,
+        "location": json.loads(db_user.location) if db_user.location else None,
+        "links": [
+            {"rel": "self", "href": f"/api/v1/users/{db_user.id}"},
+            {"rel": "posts", "href": f"/api/v1/users/{db_user.id}/posts"},
+            {"rel": "comments", "href": f"/api/v1/users/{db_user.id}/comments"}
+        ]
+    }
+
+    return user_dict
 
 @router.put("/{user_id}", response_model=UserRead, summary="Update an existing user")
 def update_user(user_id: str, user_data: UserCreate, db: Session = Depends(get_db)):
@@ -250,6 +267,7 @@ def update_user(user_id: str, user_data: UserCreate, db: Session = Depends(get_d
             user_data.dateOfBirth = datetime.strptime(user_data.dateOfBirth, "%Y-%m-%d")
         except:
             raise HTTPException(status_code=400, detail="BODY_NOT_VALID: invalid date format, expected YYYY-MM-DD")
+
     user.firstName = user_data.firstName
     user.lastName = user_data.lastName
     user.title = user_data.title
@@ -257,12 +275,30 @@ def update_user(user_id: str, user_data: UserCreate, db: Session = Depends(get_d
     user.phone = user_data.phone
     user.picture = str(user_data.picture) if user_data.picture else None
     user.location = json.dumps(user_data.location.dict()) if user_data.location else None
+
     db.commit()
     db.refresh(user)
-    if user.location:
-        user.location = json.loads(user.location)
-    return user
 
+    
+    user_dict = {
+        "id": user.id,
+        "firstName": user.firstName,
+        "lastName": user.lastName,
+        "email": user.email,
+        "title": user.title,
+        "dateOfBirth": user.dateOfBirth.isoformat() if user.dateOfBirth else None,
+        "registerDate": user.registerDate.isoformat(),
+        "phone": user.phone,
+        "picture": user.picture,
+        "location": json.loads(user.location) if user.location else None,
+        "links": [
+            {"rel": "self", "href": f"/api/v1/users/{user.id}"},
+            {"rel": "posts", "href": f"/api/v1/users/{user.id}/posts"},
+            {"rel": "comments", "href": f"/api/v1/users/{user.id}/comments"}
+        ]
+    }
+
+    return user_dict
 
 @router.delete("/{user_id}", summary="Delete a user")
 def delete_user(user_id: str = Path(..., description="ID of the user to delete"), db: Session = Depends(get_db)):

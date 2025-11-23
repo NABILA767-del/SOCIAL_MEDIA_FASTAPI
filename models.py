@@ -8,6 +8,7 @@ from sqlalchemy.orm import relationship, declarative_base
 from pydantic import BaseModel, EmailStr, HttpUrl, field_validator,ConfigDict
 from pydantic.generics import GenericModel
 from fastapi import Header, HTTPException
+from database import engine
 
 Base = declarative_base()
 
@@ -57,7 +58,7 @@ class Comment(Base):
     owner = relationship("User", back_populates="comments")
     post_relation = relationship("Post", back_populates="comments")
 
-
+Base.metadata.create_all(bind=engine)
 T = TypeVar("T")
 
 class PaginatedResponse(GenericModel, Generic[T]):
@@ -118,6 +119,9 @@ class UserSummary(BaseModel):
 class UserLinks(BaseModel):
     rel: str
     href: str
+class TagWithLinks(BaseModel):
+    tag: str
+    links: List[Link]
 
 
 class UserData(UserCreate):

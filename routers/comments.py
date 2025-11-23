@@ -157,42 +157,7 @@ def get_comments(
         )
 
 
-@router.post(
-    "",
-    tags=["Comments"],
-    summary="Create a comment",
-    description="Creates a comment linked to an existing post and an existing user.",
-    response_model=CommentRead
-)
-def create_comment(comment: CommentCreate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == comment.owner_id).first()
-    post = db.query(Post).filter(Post.id == comment.post_id).first()
-    if not user or not post:
-        raise HTTPException(404, detail="RESOURCE_NOT_FOUND:user or post not found")
 
-    db_comment = Comment(
-        id=str(uuid.uuid4()),
-        message=comment.message,
-        owner_id=comment.owner_id,
-        post_id=comment.post_id
-    )
-    db.add(db_comment)
-    db.commit()
-    db.refresh(db_comment)
-    owner = db_comment.owner
-    return CommentRead(
-        id=db_comment.id,
-        message=db_comment.message,
-        post_id=db_comment.post_id,
-        publishDate=db_comment.publishDate.isoformat(),
-        owner=UserSummary(
-            id=owner.id,
-            firstName=owner.firstName,
-            lastName=owner.lastName,
-            title=owner.title,
-            picture=owner.picture
-        )
-    )
 
 
 @router.get(
@@ -232,6 +197,55 @@ def get_comment(comment_id: str, db: Session = Depends(get_db)):
     return comment_dict
 
 
+@router.post(
+    "",
+    tags=["Comments"],
+    summary="Create a comment",
+    description="Creates a comment linked to an existing post and an existing user.",
+    response_model=CommentRead
+)
+def create_comment(comment: CommentCreate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == comment.owner_id).first()
+    post = db.query(Post).filter(Post.id == comment.post_id).first()
+    if not user or not post:
+        raise HTTPException(404, detail="RESOURCE_NOT_FOUND:user or post not found")
+
+    db_comment = Comment(
+        id=str(uuid.uuid4()),
+        message=comment.message,
+        owner_id=comment.owner_id,
+        post_id=comment.post_id
+    )
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+
+    owner = db_comment.owner
+
+    comment_dict = CommentRead(
+        id=db_comment.id,
+        message=db_comment.message,
+        post_id=db_comment.post_id,
+        publishDate=db_comment.publishDate.isoformat(),
+        owner=UserSummary(
+            id=owner.id,
+            firstName=owner.firstName,
+            lastName=owner.lastName,
+            title=owner.title,
+            picture=owner.picture
+        )
+    ).dict()
+
+    
+    comment_dict["links"] = [
+        {"rel": "self", "href": f"/api/v1/comments/{db_comment.id}"},
+        {"rel": "owner", "href": f"/api/v1/users/{owner.id}"},
+        {"rel": "post", "href": f"/api/v1/posts/{db_comment.post_id}"}
+    ]
+
+    return comment_dict
+
+
 @router.put(
     "/{comment_id}",
     tags=["Comments"],
@@ -246,11 +260,35 @@ def update_comment(comment_id: str, comment: CommentCreate, db: Session = Depend
         raise HTTPException(404, detail="RESOURCE_NOT_FOUND:comment not found")
     if comment.owner_id != db_comment.owner_id:
         raise HTTPException(400, detail="Cannot change owner")
+
     db_comment.message = comment.message
     db.commit()
     db.refresh(db_comment)
-    return db_comment
 
+    owner = db_comment.owner
+
+    comment_dict = CommentRead(
+        id=db_comment.id,
+        message=db_comment.message,
+        post_id=db_comment.post_id,
+        publishDate=db_comment.publishDate.isoformat(),
+        owner=UserSummary(
+            id=owner.id,
+            firstName=owner.firstName,
+            lastName=owner.lastName,
+            title=owner.title,
+            picture=owner.picture
+        )
+    ).dict()
+
+    
+    comment_dict["links"] = [
+        {"rel": "self", "href": f"/api/v1/comments/{db_comment.id}"},
+        {"rel": "owner", "href": f"/api/v1/users/{owner.id}"},
+        {"rel": "post", "href": f"/api/v1/posts/{db_comment.post_id}"}
+    ]
+
+    return comment_dict
 
 @router.delete(
     "/{comment_id}",
