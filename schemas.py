@@ -5,9 +5,6 @@ from pydantic import BaseModel, EmailStr, HttpUrl, field_validator, ConfigDict
 from pydantic.generics import GenericModel
 from fastapi import Header, HTTPException
 
-# -------------------------------------
-# Pagination generics
-# -------------------------------------
 
 T = TypeVar("T")
 
@@ -17,9 +14,7 @@ class PaginatedResponse(GenericModel, Generic[T]):
     page: int
     limit: int
 
-# -------------------------------------
-# Location
-# -------------------------------------
+
 
 class Location(BaseModel):
     street: Optional[str] = None
@@ -37,18 +32,13 @@ class Location(BaseModel):
             raise ValueError("timezone must be in format +HH:MM or -HH:MM")
         return v
 
-# -------------------------------------
-# HATEOAS
-# -------------------------------------
+
 
 class Link(BaseModel):
     rel: str
     href: str
 
 
-# -------------------------------------
-# USER SCHEMAS
-# -------------------------------------
 
 class UserCreate(BaseModel):
     firstName: str
@@ -103,9 +93,7 @@ class UsersResponse(BaseModel):
     limit: int
     links: List[UserLinks] = []
 
-# -------------------------------------
-# POST SCHEMAS
-# -------------------------------------
+
 
 class PostCreate(BaseModel):
     text: str
@@ -145,9 +133,6 @@ class PostListResponse(BaseModel):
     limit: int
     links: List[Link] = []
 
-# -------------------------------------
-# COMMENT SCHEMAS
-# -------------------------------------
 
 class CommentCreate(BaseModel):
     message: str
@@ -173,9 +158,7 @@ class CommentResponse(BaseModel):
     publishDate: datetime
     owner: Optional[UserSummary] = None
 
-# -------------------------------------
-# TAGS
-# -------------------------------------
+
 
 class TagWithLinks(BaseModel):
     tag: str
@@ -185,9 +168,7 @@ class TagWithLinks(BaseModel):
 class TagResponse(BaseModel):
     tags: List[str]
 
-# -------------------------------------
-# Pagination for all
-# -------------------------------------
+
 
 class PaginatedUserResponse(PaginatedResponse[UserRead]):
     api_version: str
@@ -201,7 +182,7 @@ class PaginatedCommentResponse(PaginatedResponse[CommentRead]):
     api_version: str
 
 
-# -----------------
+
 
 class ParamsNotValidException(HTTPException):
     def _init_(self, param_name: str):
