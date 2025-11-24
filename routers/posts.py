@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from io import BytesIO
 from fastapi.responses import StreamingResponse
-from models import Post, User, PostCreate, PostRead, UserSummary,PostListResponse
+from models import Post, User
+from schemas import  PostCreate, PostRead, UserSummary,PostListResponse
 from database import get_db
 from utils import remove_accents, safe_str, format_date, choose_encoding, compress_response, validate_uuid,parse_accept_header,json2xml_bytes
 from hashlib import md5

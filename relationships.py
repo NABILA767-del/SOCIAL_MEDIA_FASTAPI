@@ -5,9 +5,9 @@ import json
 from typing import List
 from uuid import uuid4
 from database import get_db
-from models import User, Post, Comment, UserSummary, PostRead, CommentRead, PaginatedResponse
+from models import User, Post, Comment
 from utils import  validate_uuid
-
+from schemas import UserSummary, PostRead, CommentRead, PaginatedResponse
 router = APIRouter()
 
 @router.get(

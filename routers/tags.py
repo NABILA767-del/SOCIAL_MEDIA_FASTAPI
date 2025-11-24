@@ -3,7 +3,8 @@ from typing import List
 from sqlalchemy.orm import Session
 import json
 
-from models import Post,TagResponse,TagWithLinks
+from models import Post
+from schemas import TagResponse,TagWithLinks
 from database import get_db
 
 router = APIRouter()

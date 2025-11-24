@@ -9,7 +9,8 @@ import json
 from hashlib import md5
 import unicodedata
 
-from models import Comment, User, Post, CommentCreate, CommentRead, UserSummary
+from models import Comment, User, Post
+from schemas import CommentRead,CommentCreate,UserSummary
 from database import get_db
 from utils import remove_accents, safe_str, format_date, choose_encoding, compress_response, validate_uuid, parse_accept_header,json2xml_bytes
 

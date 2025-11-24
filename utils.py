@@ -14,7 +14,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from dicttoxml import dicttoxml
-from models import ParamsNotValidException
+from schemas import ParamsNotValidException
+
 def validate_uuid(param_value: str, param_name: str):
     """Check that the value is a valid UUID"""
     try:
