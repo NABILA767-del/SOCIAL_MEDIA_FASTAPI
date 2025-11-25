@@ -1,15 +1,13 @@
 from fastapi import APIRouter, Depends, Query, Path, Header, HTTPException, Response
 from sqlalchemy.orm import Session
-from typing import Optional
 from datetime import datetime
 import uuid, json
 from io import BytesIO
-import hashlib 
 from hashlib import md5
-from fastapi.responses import JSONResponse,StreamingResponse
+from fastapi.responses import StreamingResponse
 from database import get_db
 from models import User
-from schemas import UserCreate,UserRead,UserSummary
+from schemas import UserCreate,UserRead
 from utils import (
     validate_uuid,
     remove_accents,

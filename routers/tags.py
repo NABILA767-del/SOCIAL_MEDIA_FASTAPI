@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 import json
 
 from models import Post
-from schemas import TagResponse,TagWithLinks
+from schemas import TagWithLinks
 from database import get_db
 
 router = APIRouter()

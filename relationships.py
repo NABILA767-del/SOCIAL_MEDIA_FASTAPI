@@ -2,7 +2,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 import json
-from typing import List
 from uuid import uuid4
 from database import get_db
 from models import User, Post, Comment

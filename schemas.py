@@ -164,12 +164,6 @@ class TagWithLinks(BaseModel):
     tag: str
     links: List[Link]
 
-
-class TagResponse(BaseModel):
-    tags: List[str]
-
-
-
 class PaginatedUserResponse(PaginatedResponse[UserRead]):
     api_version: str
 
@@ -180,8 +174,6 @@ class PaginatedPostResponse(PaginatedResponse[PostRead]):
 
 class PaginatedCommentResponse(PaginatedResponse[CommentRead]):
     api_version: str
-
-
 
 
 class ParamsNotValidException(HTTPException):

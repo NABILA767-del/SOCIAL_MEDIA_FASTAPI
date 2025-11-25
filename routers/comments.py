@@ -7,8 +7,6 @@ from datetime import datetime
 import uuid
 import json
 from hashlib import md5
-import unicodedata
-
 from models import Comment, User, Post
 from schemas import CommentRead,CommentCreate,UserSummary
 from database import get_db
