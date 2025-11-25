@@ -143,7 +143,7 @@ def get_comments(
             "Last-Modified": last_modified,
             "Content-Encoding": chosen_encoding,
             "Content-Language": lang,
-            "Vary": "Accept-Encoding, Accept-Language"
+            "Vary": "Accept-Language, Accept-Encoding"
         }
 
         return StreamingResponse(BytesIO(response_bytes), media_type=media_type, headers=headers)

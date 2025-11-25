@@ -160,7 +160,7 @@ def get_users(
             "Cache-Control": "public, max-age=60, must-revalidate",
             "ETag": etag,
             "Last-Modified": last_modified,
-            "Vary": "Accept-Encoding, Accept-Language"
+            "Vary": "Accept-Language, Accept-Encoding"
         }
 
         return StreamingResponse(BytesIO(response_bytes), media_type=media_type, headers=headers)
