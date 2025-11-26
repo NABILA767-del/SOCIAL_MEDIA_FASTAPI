@@ -95,10 +95,13 @@ def get_comments(
                     "title": safe_str(owner.title),
                     "picture": safe_str(owner.picture)
                 },
-                "links": {
-                    "self": f"/comments/{c.id}"
-                }
+                "links": [
+                    {"rel": "self", "href": f"/api/v1/posts/{c.id}"},
+                    {"rel": "comments", "href": f"/api/v1/posts/{c.id}/comments"},
+                    {"rel": "user", "href": f"/api/v1/users/{owner.id}"}
+                ]
             })
+            
 
         last_page = max((total - 1) // limit + 1, 1)
         base_url = "/api/v1/comments"

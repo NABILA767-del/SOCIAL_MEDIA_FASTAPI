@@ -72,29 +72,6 @@ class UserLinks(BaseModel):
     href: str
 
 
-class UserData(BaseModel):
-    id: str
-    firstName: str
-    lastName: str
-    email: str
-    title: Optional[str] = None
-    dateOfBirth: Optional[str] = None
-    registerDate: Optional[str] = None
-    phone: Optional[str] = None
-    picture: Optional[str] = None
-    location: Optional[Dict] = None
-    links: List[UserLinks] = []
-
-
-class UsersResponse(BaseModel):
-    data: List[UserData]
-    total: int
-    page: int
-    limit: int
-    links: List[UserLinks] = []
-
-
-
 class PostCreate(BaseModel):
     text: str
     owner_id: str
@@ -163,17 +140,6 @@ class CommentResponse(BaseModel):
 class TagWithLinks(BaseModel):
     tag: str
     links: List[Link]
-
-class PaginatedUserResponse(PaginatedResponse[UserRead]):
-    api_version: str
-
-
-class PaginatedPostResponse(PaginatedResponse[PostRead]):
-    api_version: str
-
-
-class PaginatedCommentResponse(PaginatedResponse[CommentRead]):
-    api_version: str
 
 
 class ParamsNotValidException(HTTPException):

@@ -97,7 +97,12 @@ def get_posts(
                     "firstName": safe_str(owner.firstName),
                     "lastName": safe_str(owner.lastName),
                     "title": safe_str(owner.title),
-                    "picture": safe_str(owner.picture)
+                    "picture": safe_str(owner.picture),
+                    "links": [
+    {"rel": "self", "href": f"/api/v1/posts/{p.id}"},
+    {"rel": "users", "href": f"/api/v1/users/{owner.id}"},
+    {"rel": "posts", "href": f"/api/v1/posts/{p.id}/comments"}
+                            ]
                 }
             })
 

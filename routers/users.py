@@ -104,9 +104,11 @@ def get_users(
                 "picture": safe_str(u.picture),
                 "location": location_dict,
                 "links": [
-                    {"rel": "self", "href": f"/api/v1/users/{u.id}"},
-                    {"rel": "posts", "href": f"/api/v1/users/{u.id}/posts"}
-                ]
+        {"rel": "self", "href": f"/api/v1/users/{u.id}"},
+        {"rel": "posts", "href": f"/api/v1/users/{u.id}/posts"},
+        {"rel": "comments", "href": f"/api/v1/users/{u.id}/comments"}
+    ]
+
             }
             result.append(user_dict)
 
