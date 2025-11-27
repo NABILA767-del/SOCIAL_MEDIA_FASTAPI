@@ -10,7 +10,7 @@ from schemas import UserSummary, PostRead, CommentRead, PaginatedResponse
 router = APIRouter()
 
 @router.get(
-    "/api/v1/users/{user_id}/posts",
+    "/users/{user_id}/posts",
     tags=["Users Relationships"],
     summary="Retrieve posts of a user",
     description="""
@@ -41,7 +41,7 @@ def get_user_posts(
 
     result = []
     for p in posts:
-        post_item = PostRead(
+        result.append( PostRead(
             id=p.id,
             text=p.text,
             tags=json.loads(p.tags) if p.tags else [],
@@ -54,15 +54,14 @@ def get_user_posts(
                 lastName=user.lastName,
                 title=user.title,
                 picture=user.picture
-            )
-        )
-        
-        post_item.links = [
+            ),
+            links = [
             {"rel": "self", "href": f"/api/v1/posts/{p.id}"},
-            {"rel": "owner", "href": f"/api/v1/users/{user.id}"}
+            {"rel": "owner", "href": f"/api/v1/users/{user.id}"},
+            {"rel": "comments", "href": f"/api/v1/posts/{p.id}/comments"}
         ]
-        result.append(post_item)
-
+      )
+    )
     
     total_pages = (total + limit - 1) // limit
     collection_links = [
@@ -77,7 +76,7 @@ def get_user_posts(
     return PaginatedResponse(data=result, total=total, page=page, limit=limit, links=collection_links)
 
 @router.get(
-    "/api/v1/users/{user_id}/comments",
+    "/users/{user_id}/comments",
     tags=["Users Relationships"],
     summary="Retrieve comments of a user",
     description="""
@@ -131,7 +130,6 @@ def get_user_comments(
 
     total_pages = (total + limit - 1) // limit
     collection_links = [
-        {"rel": "self", "href": f"/api/v1/users/{user_id}/comments?page={page}&limit={limit}"},
         {"rel": "first", "href": f"/api/v1/users/{user_id}/comments?page=1&limit={limit}"},
         {"rel": "last", "href": f"/api/v1/users/{user_id}/comments?page={total_pages}&limit={limit}"}
     ]
@@ -144,7 +142,7 @@ def get_user_comments(
 
 
 @router.get(
-    "/api/v1/posts/{post_id}/comments",
+    "/posts/{post_id}/comments",
     tags=["Posts Relationships"],
     summary="Retrieve comments of a post",
     description="""
@@ -191,14 +189,13 @@ def get_post_comments(
                 ) if c.owner else None,
                 links=[
                     {"rel": "self", "href": f"/api/v1/comments/{c.id}"},
-                    {"rel": "owner", "href": f"/api/v1/users/{c.owner_id}"} if c.owner_id else {}
+                    {"rel": "owner", "href": f"/api/v1/users/{c.owner_id}"} 
                 ]
             )
         )
 
     total_pages = (total + limit - 1) // limit
     collection_links = [
-        {"rel": "self", "href": f"/api/v1/posts/{post_id}/comments?page={page}&limit={limit}"},
         {"rel": "first", "href": f"/api/v1/posts/{post_id}/comments?page=1&limit={limit}"},
         {"rel": "last", "href": f"/api/v1/posts/{post_id}/comments?page={total_pages}&limit={limit}"}
     ]
@@ -211,7 +208,7 @@ def get_post_comments(
 
 
 @router.get(
-    "/api/v1/tags/{tagname}/posts",
+    "/tags/{tagname}/posts",
     response_model=PaginatedResponse[PostRead],
     tags=["Tags Relationships"],
     summary="Retrieve all posts by tag",
@@ -257,7 +254,6 @@ def get_posts_by_tag(
 
     total_pages = (total + limit - 1) // limit
     collection_links = [
-        {"rel": "self", "href": f"/api/v1/tags/{tagname}/posts?page={page}&limit={limit}"},
         {"rel": "first", "href": f"/api/v1/tags/{tagname}/posts?page=1&limit={limit}"},
         {"rel": "last", "href": f"/api/v1/tags/{tagname}/posts?page={total_pages}&limit={limit}"}
     ]

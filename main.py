@@ -10,7 +10,7 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(posts.router, prefix="/api/v1/posts", tags=["Posts"])
 app.include_router(comments.router, prefix="/api/v1/comments", tags=["Comments"])
 app.include_router(tags.router, prefix="/api/v1/tags", tags=["Tags"])
-app.include_router(relationships_router)
+app.include_router(relationships_router,prefix="/api/v1",tags=["Relationships"])
 configure_cors(app)
 register_exception_handlers(app)
 

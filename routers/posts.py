@@ -100,36 +100,23 @@ def get_posts(
                     "picture": safe_str(owner.picture),
                     "links": [
     {"rel": "self", "href": f"/api/v1/posts/{p.id}"},
-    {"rel": "users", "href": f"/api/v1/users/{owner.id}"},
-    {"rel": "posts", "href": f"/api/v1/posts/{p.id}/comments"}
+    {"rel": "users", "href": f"/api/v1/users/{owner.id}/posts"},
+    {"rel": "comments", "href": f"/api/v1/posts/{p.id}/comments"}
                             ]
                 }
             })
 
-        total_pages = (total + limit - 1) // limit
+        last_page = max((total - 1) // limit + 1, 1)
         base_url = "/api/v1/posts"
-        query_params = []
-        if owner_id: query_params.append(f"owner_id={owner_id}")
-        if likes is not None: query_params.append(f"likes={likes}")
-        if tags: query_params.append(f"tags={tags}")
-        if search: query_params.append(f"search={search}")
-        query_string = "&".join(query_params)
-
-        def build_url(page_num: int):
-            s = f"{base_url}?page={page_num}&limit={limit}"
-            if query_string:
-                s += f"&{query_string}"
-            return s
-
-        links = [
-            {"rel": "self", "href": build_url(page)},
-            {"rel": "first", "href": build_url(1)},
-            {"rel": "last", "href": build_url(total_pages)}
-        ]
+        links = {
+            "first": f"{base_url}?page=1&limit={limit}",
+            "last": f"{base_url}?page={last_page}&limit={limit}",
+        }
         if page > 1:
-            links.append({"rel": "prev", "href": build_url(page - 1)})
-        if page < total_pages:
-            links.append({"rel": "next", "href": build_url(page + 1)})
+            links["prev"] = f"{base_url}?page={page-1}&limit={limit}"
+        if page < last_page:
+            links["next"] = f"{base_url}?page={page+1}&limit={limit}"
+    
 
         response_data = {"api_version": "v1", "data": result, "total": total, "page": page, "limit": limit, "links": links}
 
@@ -192,7 +179,10 @@ def create_post(post: PostCreate, db: Session = Depends(get_db)):
         firstName=owner.firstName,
         lastName=owner.lastName,
         title=owner.title,
-        picture=owner.picture
+        picture=owner.picture,
+        links=[
+            {"rel": "self", "href": f"/api/v1/users/{owner.id}"}
+        ]
     )
 
     post_dict = PostRead(

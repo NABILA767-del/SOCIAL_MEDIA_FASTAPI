@@ -114,12 +114,12 @@ def get_users(
 
         collection_links = [
             {"rel": "first", "href": f"/api/v1/users?page=1&limit={limit}"},
-            {"rel": "last", "href": f"/api/v1/users?page={(total - 1) // limit + 1}&limit={limit}"}
+            {"rel": "last", "href": f"api/v1/users?page={(total - 1) // limit + 1}&limit={limit}"}
         ]
         if page > 1:
             collection_links.append({"rel": "prev", "href": f"/api/v1/users?page={page-1}&limit={limit}"})
         if page * limit < total:
-            collection_links.append({"rel": "next", "href": f"/api/v1/users?page={page+1}&limit={limit}"})
+            collection_links.append({"rel": "next", "href": f"api/v1/users?page={page+1}&limit={limit}"})
 
         response_data = {
             "api_version": "v1",
