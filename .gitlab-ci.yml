@@ -1,0 +1,50 @@
+
+
+image: python:3.11-slim
+
+
+services:
+  - docker:dind
+
+
+stages:
+  - build
+  - package
+  - deploy
+
+
+python-build:
+  stage: build
+  script:
+    - pip install --upgrade pip
+    - pip install fastapi uvicorn sqlalchemy pydantic python-multipart
+    - echo "Dependencies installed"
+  tags:
+    - docker
+
+
+docker-build:
+  stage: package
+  before_script:
+    
+    - echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
+  script:
+    
+    - docker build -t $DOCKER_HUB_USERNAME/socialmediaapp-fastapi:latest .
+    
+    - docker push $DOCKER_HUB_USERNAME/socialmediaapp-fastapi:latest
+  dependencies:
+    - python-build
+  tags:
+    - docker
+
+
+docker-deploy:
+  stage: deploy
+  script:
+  
+    - docker run -d -p 8000:8000 $DOCKER_HUB_USERNAME/socialmediaapp-fastapi:latest
+  dependencies:
+    - docker-build
+  tags:
+    - docker
