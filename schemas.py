@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, date
-from typing import List, Optional, Dict, TypeVar, Generic
+from typing import List, Optional,TypeVar, Generic
 from pydantic import BaseModel, EmailStr, HttpUrl, field_validator, ConfigDict
 from pydantic.generics import GenericModel
 from fastapi import Header, HTTPException
@@ -143,8 +143,8 @@ class TagWithLinks(BaseModel):
 
 
 class ParamsNotValidException(HTTPException):
-    def _init_(self, param_name: str):
-        super()._init_(
+    def init(self, param_name: str):
+        super().init(
             status_code=400,
             detail=f"PARAMS_NOT_VALID: {param_name} format invalid"
         )

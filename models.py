@@ -6,7 +6,7 @@ from database import engine
 Base = declarative_base()
 
 class User(Base):
-    __tablename__= "users"
+    __tablename__ = "users"
 
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     firstName = Column(String, nullable=False)
@@ -24,7 +24,7 @@ class User(Base):
 
 
 class Post(Base):
-    __tablename__= "posts"
+    __tablename__ = "posts"
 
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     text = Column(Text, nullable=False)

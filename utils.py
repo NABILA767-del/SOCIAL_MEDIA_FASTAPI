@@ -1,4 +1,3 @@
-
 import uuid
 import json
 import gzip
@@ -242,4 +241,3 @@ def register_exception_handlers(app: FastAPI):
             status_code=exc.status_code,
             content={"detail": exc.detail}
         )
-    
